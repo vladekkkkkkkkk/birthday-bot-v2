@@ -61,21 +61,20 @@ async def update_participant_message(context: ContextTypes.DEFAULT_TYPE, chat_id
     message_ids = load_message_ids()
     stored = message_ids.get(str(chat_id))
 
-    if stored:
-        try:
+    try:
+        if stored:
             await context.bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=stored,
                 text=message,
                 parse_mode="Markdown"
             )
-        except Exception as e:
-            print("Ошибка при редактировании:", e)
-    else:
-        sent = await context.bot.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")
-        message_ids[str(chat_id)] = sent.message_id
-        save_message_ids(message_ids)
-
+        else:
+            sent = await context.bot.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")
+            message_ids[str(chat_id)] = sent.message_id
+            save_message_ids(message_ids)
+    except Exception as e:
+        print(f"Ошибка при обновлении списка: {e}")
 
 # Обработка кнопок
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -130,22 +129,21 @@ async def send_welcome_message(context: ContextTypes.DEFAULT_TYPE, chat_id: int)
 
 👇 Отметься, когда поедешь:"""
 
-    sent = await context.bot.send_message(chat_id=chat_id, text=greeting, reply_markup=reply_markup, parse_mode="Markdown")
-    message_ids = load_message_ids()
-    message_ids[str(chat_id)] = sent.message_id
-    save_message_ids(message_ids)
+    await context.bot.send_message(chat_id=chat_id, text=greeting, reply_markup=reply_markup, parse_mode="Markdown")
 
 
 # Авто-отправка приветствия при добавлении бота в группу
 async def new_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message and update.message.new_chat_members:
         for member in update.message.new_chat_members:
-            if member.id == context.bot.id:
-                # Бота добавили в группу — отправляем общее приветствие
+            if member.id != context.bot.id:
+                # Кто-то новый добавлен в группу
                 await send_welcome_message(context, update.effective_chat.id)
-            else:
-                # Кто-то новый вступил — отправляем повторное приветствие в общий чат
+                await update_participant_message(context, update.effective_chat.id)
+            elif member.id == context.bot.id:
+                # Бот сам добавлен — отправляем приветствие и список
                 await send_welcome_message(context, update.effective_chat.id)
+                await update_participant_message(context, update.effective_chat.id)
 
 
 # Ежедневная проверка и напоминания
