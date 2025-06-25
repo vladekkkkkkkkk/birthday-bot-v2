@@ -177,7 +177,7 @@ def main():
     application = ApplicationBuilder().token(TOKEN).build()
 
     application.add_handler(CallbackQueryHandler(button_handler))
-    application.add_handler(MessageHandler(filters.NEW_CHAT_MEMBERS, new_chat_member))
+    application.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, new_chat_member))
     application.add_handler(ChatMemberHandler(new_chat_member, chat_member_types=["my_chat_member"]))
 
     job_queue = application.job_queue
