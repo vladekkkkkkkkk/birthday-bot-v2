@@ -124,14 +124,20 @@ async def send_welcome_message(context: ContextTypes.DEFAULT_TYPE, chat_id: int)
 
 👇 Отметься, когда поедешь:"""
 
-    await context.bot.send_message(chat_id=chat_id, text=greeting, reply_markup=reply_markup, parse_mode="Markdown")
+    await context.bot.send_message(
+        chat_id=chat_id,
+        text=greeting,
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
+    )
 
 
 # Авто-отправка приветствия при добавлении бота в группу
 async def new_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message and update.message.new_chat_members:
         for member in update.message.new_chat_members:
-            if member.id == context.bot.id:
+            if member.id != context.bot.id:
+                # Новый участник (не бот) — переотправляем приветствие
                 await send_welcome_message(context, update.effective_chat.id)
 
 
