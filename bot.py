@@ -52,7 +52,7 @@ def get_users_by_choice(choice):
 
 
 # Обновление общего списка в чате
-def update_participant_message(context: ContextTypes.DEFAULT_TYPE, chat_id: int):
+async def update_participant_message(context: ContextTypes.DEFAULT_TYPE, chat_id: int):
     message = "📋 *Обновлённый список:*\n\n"
     message += "🧳 4–5 июля: " + ", ".join(get_users_by_choice("4")) + "\n"
     message += "🎉 5–6 июля: " + ", ".join(get_users_by_choice("5")) + "\n"
@@ -62,7 +62,7 @@ def update_participant_message(context: ContextTypes.DEFAULT_TYPE, chat_id: int)
     stored = load_message_id()
     if stored and stored["chat_id"] == chat_id:
         try:
-            context.bot.edit_message_text(
+            await context.bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=stored["message_id"],
                 text=message,
@@ -71,7 +71,7 @@ def update_participant_message(context: ContextTypes.DEFAULT_TYPE, chat_id: int)
         except Exception as e:
             print("Ошибка при редактировании:", e)
     else:
-        sent = context.bot.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")
+        sent = await context.bot.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")
         save_message_id(chat_id, sent.message_id)
 
 
