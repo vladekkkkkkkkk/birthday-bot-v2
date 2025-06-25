@@ -13,21 +13,17 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 TOKEN = "7699913355:AAFbTLZttNVdkMi6Ub9UbM9jXJjl-BaKiCo"
 GROUP_ID = -1000000000000  # заменишь на свой если нужно
 DATA_FILE = "user_choices.json"
-MESSAGE_ID_FILE = "message_id.json"
+MESSAGE_ID_FILE = "message_ids.json"
 
-def save_message_id(chat_id, message_id):
-    with open(MESSAGE_ID_FILE, "w") as f:
-        json.dump({"chat_id": chat_id, "message_id": message_id}, f)
-
-def load_message_id():
+def load_message_ids():
     if os.path.exists(MESSAGE_ID_FILE):
-        with open(MESSAGE_ID_FILE, "r") as f:
-            data = json.load(f)
-            if isinstance(data, dict):
-                return data
-            else:
-                return {"chat_id": GROUP_ID, "message_id": data}
-    return None
+        with open(MESSAGE_ID_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+def save_message_ids(data):
+    with open(MESSAGE_ID_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -43,28 +39,33 @@ def save_data(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-user_choices = load_data()
+
 
 
 # Получить пользователей по выбору
-def get_users_by_choice(choice):
-    return [f"@{u}" for u, c in user_choices.items() if c == choice]
+def get_users_by_choice(chat_data, choice):
+    return [f"@{u}" for u, c in chat_data.items() if c == choice]
 
 
 # Обновление общего списка в чате
 async def update_participant_message(context: ContextTypes.DEFAULT_TYPE, chat_id: int):
-    message = "📋 *Обновлённый список:*\n\n"
-    message += "🧳 4–5 июля: " + ", ".join(get_users_by_choice("4")) + "\n"
-    message += "🎉 5–6 июля: " + ", ".join(get_users_by_choice("5")) + "\n"
-    message += "🤔 Думают: " + ", ".join(get_users_by_choice("думаю")) + "\n"
-    message += "❌ Не едут: " + ", ".join(get_users_by_choice("нет"))
+    all_data = load_data()
+    chat_data = all_data.get(str(chat_id), {})
 
-    stored = load_message_id()
-    if stored and stored["chat_id"] == chat_id:
+    message = "📋 *Обновлённый список:*\n\n"
+    message += "🧳 4–5 июля: " + ", ".join(get_users_by_choice(chat_data, "4")) + "\n"
+    message += "🎉 5–6 июля: " + ", ".join(get_users_by_choice(chat_data, "5")) + "\n"
+    message += "🤔 Думают: " + ", ".join(get_users_by_choice(chat_data, "думаю")) + "\n"
+    message += "❌ Не едут: " + ", ".join(get_users_by_choice(chat_data, "нет"))
+
+    message_ids = load_message_ids()
+    stored = message_ids.get(str(chat_id))
+
+    if stored:
         try:
             await context.bot.edit_message_text(
                 chat_id=chat_id,
-                message_id=stored["message_id"],
+                message_id=stored,
                 text=message,
                 parse_mode="Markdown"
             )
@@ -72,7 +73,8 @@ async def update_participant_message(context: ContextTypes.DEFAULT_TYPE, chat_id
             print("Ошибка при редактировании:", e)
     else:
         sent = await context.bot.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")
-        save_message_id(chat_id, sent.message_id)
+        message_ids[str(chat_id)] = sent.message_id
+        save_message_ids(message_ids)
 
 
 # Обработка кнопок
@@ -81,12 +83,16 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = query.from_user
     choice = query.data
     username = user.username or f"id{user.id}"
+    chat_id = query.message.chat.id
 
-    user_choices[username] = choice
-    save_data(user_choices)
+    all_data = load_data()
+    chat_data = all_data.get(str(chat_id), {})
+    chat_data[username] = choice
+    all_data[str(chat_id)] = chat_data
+    save_data(all_data)
 
     await query.answer()
-    await update_participant_message(context, query.message.chat.id)
+    await update_participant_message(context, chat_id)
 
 
 # Приветственное сообщение с кнопками и текстом
@@ -124,26 +130,18 @@ async def send_welcome_message(context: ContextTypes.DEFAULT_TYPE, chat_id: int)
 
 👇 Отметься, когда поедешь:"""
 
-    await context.bot.send_message(
-        chat_id=chat_id,
-        text=greeting,
-        reply_markup=reply_markup,
-        parse_mode="Markdown"
-    )
+    sent = await context.bot.send_message(chat_id=chat_id, text=greeting, reply_markup=reply_markup, parse_mode="Markdown")
+    message_ids = load_message_ids()
+    message_ids[str(chat_id)] = sent.message_id
+    save_message_ids(message_ids)
 
 
 # Авто-отправка приветствия при добавлении бота в группу
 async def new_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message and update.message.new_chat_members:
         for member in update.message.new_chat_members:
-            # Если добавился сам бот — отправить приветствие в чат
-            if member.id == context.bot.id:
-                print("Бот добавлен в группу")
+            if member.id != context.bot.id:
                 await send_welcome_message(context, update.effective_chat.id)
-            # Если добавился обычный человек — можно при желании сделать другое
-            else:
-                print(f"Добавлен пользователь: {member.username}")
-                # Здесь можешь тоже что-то отправить, если хочешь
 
 
 # Ежедневная проверка и напоминания
