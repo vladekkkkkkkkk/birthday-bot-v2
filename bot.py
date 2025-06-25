@@ -128,11 +128,11 @@ async def send_welcome_message(context: ContextTypes.DEFAULT_TYPE, chat_id: int)
 
 
 # Авто-отправка приветствия при добавлении бота в группу
-def new_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def new_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message and update.message.new_chat_members:
         for member in update.message.new_chat_members:
             if member.id == context.bot.id:
-                send_welcome_message(context, update.effective_chat.id)
+                await send_welcome_message(context, update.effective_chat.id)
 
 
 # Ежедневная проверка и напоминания
