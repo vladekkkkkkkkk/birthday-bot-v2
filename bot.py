@@ -90,7 +90,7 @@ def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # Приветственное сообщение с кнопками и текстом
- async def send_welcome_message(context: ContextTypes.DEFAULT_TYPE, chat_id: int):
+async def send_welcome_message(context: ContextTypes.DEFAULT_TYPE, chat_id: int):
     keyboard = [
         [InlineKeyboardButton("🧳 с 4 на 5 июля", callback_data="4")],
         [InlineKeyboardButton("🎉 с 5 на 6 июля", callback_data="5")],
