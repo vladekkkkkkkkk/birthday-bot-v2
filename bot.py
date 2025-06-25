@@ -124,7 +124,7 @@ def send_welcome_message(context: ContextTypes.DEFAULT_TYPE, chat_id: int):
 
 👇 Отметься, когда поедешь:"""
 
-    context.bot.send_message(chat_id=chat_id, text=greeting, reply_markup=reply_markup, parse_mode="Markdown")
+    await context.bot.send_message(chat_id=chat_id, text=greeting, reply_markup=reply_markup, parse_mode="Markdown")
 
 
 # Авто-отправка приветствия при добавлении бота в группу
