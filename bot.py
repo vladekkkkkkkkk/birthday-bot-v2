@@ -136,9 +136,14 @@ async def send_welcome_message(context: ContextTypes.DEFAULT_TYPE, chat_id: int)
 async def new_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message and update.message.new_chat_members:
         for member in update.message.new_chat_members:
-            if member.id != context.bot.id:
-                # Новый участник (не бот) — переотправляем приветствие
+            # Если добавился сам бот — отправить приветствие в чат
+            if member.id == context.bot.id:
+                print("Бот добавлен в группу")
                 await send_welcome_message(context, update.effective_chat.id)
+            # Если добавился обычный человек — можно при желании сделать другое
+            else:
+                print(f"Добавлен пользователь: {member.username}")
+                # Здесь можешь тоже что-то отправить, если хочешь
 
 
 # Ежедневная проверка и напоминания
