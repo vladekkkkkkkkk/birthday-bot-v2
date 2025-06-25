@@ -10,7 +10,7 @@ from telegram.ext import (
 )
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 
-TOKEN = "8056403018:AAGNxC2e81Wt_SSGFaBP9LG_CPCnR2kIYWs"
+TOKEN = "7699913355:AAFbTLZttNVdkMi6Ub9UbM9jXJjl-BaKiCo"
 GROUP_ID = -1000000000000  # заменишь на свой если нужно
 DATA_FILE = "user_choices.json"
 MESSAGE_ID_FILE = "message_id.json"
