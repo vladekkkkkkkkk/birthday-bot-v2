@@ -76,7 +76,7 @@ async def update_participant_message(context: ContextTypes.DEFAULT_TYPE, chat_id
 
 
 # Обработка кнопок
-def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user = query.from_user
     choice = query.data
@@ -85,7 +85,7 @@ def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_choices[username] = choice
     save_data(user_choices)
 
-    query.answer()
+    await query.answer()
     await update_participant_message(context, query.message.chat.id)
 
 
