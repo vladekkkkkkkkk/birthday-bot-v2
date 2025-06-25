@@ -86,7 +86,7 @@ def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     save_data(user_choices)
 
     query.answer()
-    update_participant_message(context, query.message.chat.id)
+    await update_participant_message(context, query.message.chat.id)
 
 
 # Приветственное сообщение с кнопками и текстом
